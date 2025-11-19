@@ -111,32 +111,85 @@ def get_closest_pixel(word_goal, pos):
 def draw_debug_trace(surface, trace):
     if not trace: return
     
-    # Panel lateral
-    panel_rect = pygame.Rect(WIDTH - 300, 0, 300, HEIGHT)
-    s = pygame.Surface((300, HEIGHT))
-    s.set_alpha(200)
-    s.fill((20, 20, 20))
-    surface.blit(s, (WIDTH - 300, 0))
+    # Panel dimensions
+    PANEL_W = 350
+    PANEL_X = WIDTH - PANEL_W
     
-    font = pygame.font.SysFont('Arial', 16)
-    y_offset = 20
+    # Background
+    s = pygame.Surface((PANEL_W, HEIGHT))
+    s.set_alpha(240)
+    s.fill((30, 30, 40))
+    surface.blit(s, (PANEL_X, 0))
     
-    title = font.render("DK Hierarchy Trace (Debug)", True, (255, 255, 255))
-    surface.blit(title, (WIDTH - 280, y_offset))
-    y_offset += 30
+    # Title
+    font_title = pygame.font.SysFont('Arial', 20, bold=True)
+    font_info = pygame.font.SysFont('Consolas', 14)
     
-    for level_idx, polygon, hit in trace:
-        color = (0, 255, 0) if hit else (255, 50, 50)
+    title = font_title.render("DK Algorithm Trace", True, (255, 255, 255))
+    surface.blit(title, (PANEL_X + 20, 20))
+    
+    y_offset = 60
+    
+    # Draw each step
+    for i, (level_idx, polygon, hit) in enumerate(trace):
+        # Box for this step
+        step_height = 100
+        rect = pygame.Rect(PANEL_X + 20, y_offset, PANEL_W - 40, step_height)
+        pygame.draw.rect(surface, (50, 50, 60), rect, border_radius=5)
         
-        # Dibujar poligono evaluado (overlay en el juego)
+        # Color based on hit/miss
+        status_color = (100, 255, 100) if hit else (255, 100, 100)
+        pygame.draw.rect(surface, status_color, rect, 2, border_radius=5)
+        
+        # Text Info
+        level_text = font_info.render(f"Level {level_idx}", True, (200, 200, 200))
+        verts_text = font_info.render(f"Vertices: {len(polygon)}", True, (150, 150, 150))
+        status_text = font_info.render(f"Result: {'INTERSECT' if hit else 'MISS'}", True, status_color)
+        
+        surface.blit(level_text, (rect.x + 10, rect.y + 10))
+        surface.blit(verts_text, (rect.x + 10, rect.y + 30))
+        surface.blit(status_text, (rect.x + 10, rect.y + 50))
+        
+        # Mini-map of the polygon
+        mini_rect = pygame.Rect(rect.x + 150, rect.y + 10, 140, 80)
+        
         if len(polygon) > 2:
-            pygame.draw.polygon(surface, color, polygon, 2)
-        
-        # Info en panel
-        info = f"L{level_idx}: {'HIT' if hit else 'MISS'} ({len(polygon)} verts)"
-        text = font.render(info, True, color)
-        surface.blit(text, (WIDTH - 280, y_offset))
-        y_offset += 20
+            # Normalize polygon to fit in mini_rect
+            min_x = min(p[0] for p in polygon)
+            max_x = max(p[0] for p in polygon)
+            min_y = min(p[1] for p in polygon)
+            max_y = max(p[1] for p in polygon)
+            
+            poly_w = max_x - min_x
+            poly_h = max_y - min_y
+            scale = min(mini_rect.width / (poly_w or 1), mini_rect.height / (poly_h or 1)) * 0.8
+            
+            center_x = mini_rect.centerx
+            center_y = mini_rect.centery
+            
+            # Centroid of polygon
+            poly_cx = (min_x + max_x) / 2
+            poly_cy = (min_y + max_y) / 2
+            
+            mini_poly = []
+            for px, py in polygon:
+                nx = center_x + (px - poly_cx) * scale
+                ny = center_y + (py - poly_cy) * scale
+                mini_poly.append((nx, ny))
+            
+            pygame.draw.polygon(surface, status_color, mini_poly, 2)
+            
+            # Draw vertices points
+            for p in mini_poly:
+                pygame.draw.circle(surface, (255, 255, 255), (int(p[0]), int(p[1])), 2)
+            
+        # Draw arrow to next if not last
+        if i < len(trace) - 1:
+            center_bottom = (rect.centerx, rect.bottom)
+            next_top = (rect.centerx, rect.bottom + 20)
+            pygame.draw.line(surface, (100, 100, 100), center_bottom, next_top, 2)
+            
+        y_offset += step_height + 20
 
 def main():
     words = ["HOLA", "MUNDO", "ADA", "ALGORITMO", "DOBKIN"]
@@ -205,6 +258,9 @@ def main():
         # UI Info
         level_text = FONT.render(f"Nivel: {current_word_index + 1}/{len(words)}", True, (200, 200, 200))
         screen.blit(level_text, (20, 20))
+        
+        debug_hint = pygame.font.SysFont('Arial', 16).render("Presiona 'D' para ver Debug DK", True, (100, 100, 100))
+        screen.blit(debug_hint, (20, HEIGHT - 30))
 
         pygame.display.flip()
         clock.tick(60)
