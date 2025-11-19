@@ -3,7 +3,7 @@ import sys
 from src.letter_mesh import generate_polygon_mesh
 from src.geometry import is_point_in_polygon
 
-# Configuración inicial
+# Configuraciï¿½n inicial
 pygame.init()
 pygame.mixer.init() # Inicializar sonido
 WIDTH, HEIGHT = 1280, 720
@@ -11,12 +11,6 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("ConvexGlyph - Prototipo")
 clock = pygame.time.Clock()
 FONT = pygame.font.SysFont('Arial', 30)
-
-# Placeholder para sonidos
-try:
-    CLICK_SOUND = pygame.mixer.Sound('assets/click.wav')
-except:
-    CLICK_SOUND = None
 
 def draw_grid(surface):
     for x in range(0, WIDTH, 50):
