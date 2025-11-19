@@ -306,3 +306,48 @@ class DKHierarchy:
     def _face_bounds(mesh: Polyhedron, face_index: int) -> Tuple[float, float, float, float]:
         points = [_project(v) for v in mesh.face_vertices(face_index)]
         return polygon_bounds(points)
+
+    def trace_intersection(
+        self,
+        start: Tuple[float, float],
+        end: Tuple[float, float],
+    ) -> List[Tuple[int, List[Tuple[float, float]], bool]]:
+        """
+        Returns a trace of the intersection test for visualization.
+        Each element is (level_index, polygon_vertices, is_hit).
+        """
+        trace = []
+        if not self.levels:
+            return trace
+        
+        seg_bounds = segment_bounds(start, end)
+        stack: List[Tuple[int, Optional[ParentPointer]]] = [(len(self.levels) - 1, None)]
+        
+        while stack:
+            level_idx, constraint = stack.pop()
+            level = self.levels[level_idx]
+            
+            # Skip level bounds check for visualization to show more detail, 
+            # or keep it to be accurate to the algorithm? 
+            # Let's keep it accurate but maybe record a "level skipped" event?
+            # For now, simple trace of faces checked.
+            
+            face_indices = self._faces_to_check(level_idx, constraint)
+            
+            for face_idx in face_indices:
+                if face_idx < 0 or face_idx >= len(level.mesh.faces):
+                    continue
+                
+                polygon = [_project(v) for v in level.mesh.face_vertices(face_idx)]
+                hit = segment_hits_convex(start, end, polygon)
+                
+                trace.append((level_idx, polygon, hit))
+                
+                if hit:
+                    if level_idx == 0:
+                        return trace
+                    
+                    pointer = level.parents[face_idx] if level.parents else None
+                    if pointer is not None:
+                        stack.append((level_idx - 1, pointer))
+        return trace

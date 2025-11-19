@@ -44,6 +44,9 @@ class PixelGoal:
         else:
             self.highlight = False
         return False
+    
+    def get_debug_trace(self, last_pos, curr_pos):
+        return self.hierarchy.trace_intersection(last_pos, curr_pos)
 
 class LetterGoal:
     def __init__(self, char, x, y, scale=50):
@@ -91,6 +94,50 @@ class WordGoal:
         for poly in self.polygons:
             poly.draw(surface)
 
+def get_closest_pixel(word_goal, pos):
+    closest = None
+    min_dist = float('inf')
+    for letter in word_goal.polygons:
+        for pixel in letter.pixels:
+            # Centroid approx
+            cx = sum(v[0] for v in pixel.vertices) / len(pixel.vertices)
+            cy = sum(v[1] for v in pixel.vertices) / len(pixel.vertices)
+            dist = (cx - pos[0])**2 + (cy - pos[1])**2
+            if dist < min_dist:
+                min_dist = dist
+                closest = pixel
+    return closest
+
+def draw_debug_trace(surface, trace):
+    if not trace: return
+    
+    # Panel lateral
+    panel_rect = pygame.Rect(WIDTH - 300, 0, 300, HEIGHT)
+    s = pygame.Surface((300, HEIGHT))
+    s.set_alpha(200)
+    s.fill((20, 20, 20))
+    surface.blit(s, (WIDTH - 300, 0))
+    
+    font = pygame.font.SysFont('Arial', 16)
+    y_offset = 20
+    
+    title = font.render("DK Hierarchy Trace (Debug)", True, (255, 255, 255))
+    surface.blit(title, (WIDTH - 280, y_offset))
+    y_offset += 30
+    
+    for level_idx, polygon, hit in trace:
+        color = (0, 255, 0) if hit else (255, 50, 50)
+        
+        # Dibujar poligono evaluado (overlay en el juego)
+        if len(polygon) > 2:
+            pygame.draw.polygon(surface, color, polygon, 2)
+        
+        # Info en panel
+        info = f"L{level_idx}: {'HIT' if hit else 'MISS'} ({len(polygon)} verts)"
+        text = font.render(info, True, color)
+        surface.blit(text, (WIDTH - 280, y_offset))
+        y_offset += 20
+
 def main():
     words = ["HOLA", "MUNDO", "ADA", "ALGORITMO", "DOBKIN"]
     current_word_index = 0
@@ -105,6 +152,7 @@ def main():
 
     word_goal = load_level(current_word_index)
     last_pos = pygame.mouse.get_pos()
+    debug_mode = False
 
     while True:
         screen.fill((30, 30, 30))
@@ -117,6 +165,9 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_d:
+                    debug_mode = not debug_mode
         
         word_goal.update(last_pos, curr_pos, is_clicking)
         word_goal.draw(screen)
@@ -125,6 +176,20 @@ def main():
         if is_clicking:
             pygame.draw.line(screen, (255, 0, 0), last_pos, curr_pos, 2)
         
+        if debug_mode:
+            closest = get_closest_pixel(word_goal, curr_pos)
+            if closest:
+                # Trace segment from last_pos to curr_pos
+                p1, p2 = last_pos, curr_pos
+                if p1 == p2:
+                    p2 = (p1[0] + 1, p1[1] + 1)
+                
+                trace = closest.get_debug_trace(p1, p2)
+                draw_debug_trace(screen, trace)
+                
+                # Highlight closest pixel
+                pygame.draw.polygon(screen, (255, 0, 255), closest.vertices, 2)
+
         # Verificar victoria
         if word_goal.is_completed():
             pygame.display.flip()
