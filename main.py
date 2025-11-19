@@ -63,6 +63,9 @@ class LetterGoal:
         if hit_any and CLICK_SOUND:
             CLICK_SOUND.play()
 
+    def is_completed(self):
+        return all(pixel.completed for pixel in self.pixels)
+
     def draw(self, surface):
         for pixel in self.pixels:
             color = (0, 255, 0) if pixel.completed else ((255, 255, 0) if pixel.highlight else (100, 100, 255))
