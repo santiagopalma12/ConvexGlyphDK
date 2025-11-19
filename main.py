@@ -5,11 +5,18 @@ from src.geometry import is_point_in_polygon
 
 # Configuración inicial
 pygame.init()
+pygame.mixer.init() # Inicializar sonido
 WIDTH, HEIGHT = 1280, 720
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("ConvexGlyph - Prototipo")
 clock = pygame.time.Clock()
 FONT = pygame.font.SysFont('Arial', 30)
+
+# Placeholder para sonidos
+try:
+    CLICK_SOUND = pygame.mixer.Sound('assets/click.wav')
+except:
+    CLICK_SOUND = None
 
 def draw_grid(surface):
     for x in range(0, WIDTH, 50):
@@ -47,8 +54,9 @@ class WordGoal:
 
     def check_click(self):
         for poly in self.polygons:
-            if poly.hovered:
+            if poly.hovered and not poly.completed:
                 poly.completed = True
+                if CLICK_SOUND: CLICK_SOUND.play()
 
     def draw(self, surface):
         for poly in self.polygons:
