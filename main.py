@@ -9,6 +9,7 @@ WIDTH, HEIGHT = 1280, 720
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("ConvexGlyph - Prototipo")
 clock = pygame.time.Clock()
+FONT = pygame.font.SysFont('Arial', 30)
 
 class PolygonGoal:
     def __init__(self, char, x, y, scale=50):
@@ -26,8 +27,29 @@ class PolygonGoal:
         color = (0, 255, 0) if self.completed else ((255, 255, 0) if self.hovered else (100, 100, 255))
         pygame.draw.polygon(surface, color, self.vertices, 3)
 
+class WordGoal:
+    def __init__(self, word, start_x, y, scale=50):
+        self.polygons = []
+        offset = 0
+        for char in word:
+            self.polygons.append(PolygonGoal(char, start_x + offset, y, scale))
+            offset += scale * 1.5
+
+    def update(self, mouse_pos):
+        for poly in self.polygons:
+            poly.update(mouse_pos)
+
+    def check_click(self):
+        for poly in self.polygons:
+            if poly.hovered:
+                poly.completed = True
+
+    def draw(self, surface):
+        for poly in self.polygons:
+            poly.draw(surface)
+
 def main():
-    goal = PolygonGoal('A', 400, 300, 100)
+    word_goal = WordGoal("HOLA", 300, 300, 80)
 
     while True:
         screen.fill((30, 30, 30))
@@ -38,11 +60,10 @@ def main():
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if goal.hovered:
-                    goal.completed = True
+                word_goal.check_click()
         
-        goal.update(mouse_pos)
-        goal.draw(screen)
+        word_goal.update(mouse_pos)
+        word_goal.draw(screen)
         
         pygame.display.flip()
         clock.tick(60)
