@@ -1,14 +1,14 @@
 import pygame
 import sys
 from src.letter_mesh import generate_polygon_mesh
-from src.geometry import is_point_in_polygon
+from src.dk_hierarchy import polyhedron_from_convex_polygon, DKHierarchy
 
-# Configuraciï¿½n inicial
+# Configuración inicial
 pygame.init()
-pygame.mixer.init() # Inicializar sonido
+pygame.mixer.init()
 WIDTH, HEIGHT = 1280, 720
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("ConvexGlyph - Prototipo")
+pygame.display.set_caption("ConvexGlyph - DK Intersection")
 clock = pygame.time.Clock()
 FONT = pygame.font.SysFont('Arial', 30)
 
@@ -29,15 +29,28 @@ class PolygonGoal:
         self.char = char
         raw_poly = generate_polygon_mesh(char, scale)
         self.vertices = [(px + x, py + y) for px, py in raw_poly]
-        self.hovered = False
         self.completed = False
+        self.highlight = False
+        
+        # Construir Jerarquía DK
+        poly = polyhedron_from_convex_polygon(self.vertices)
+        self.hierarchy = DKHierarchy.build(poly)
 
-    def update(self, mouse_pos):
+    def update(self, last_pos, curr_pos, is_clicking):
         if self.completed: return
-        self.hovered = is_point_in_polygon(mouse_pos, self.vertices)
+        
+        # Detectar intersección usando DK Hierarchy (O(log n))
+        # Si el segmento del mouse cruza el polígono, se activa
+        if self.hierarchy.intersects_segment(last_pos, curr_pos):
+            self.highlight = True
+            if is_clicking:
+                self.completed = True
+                if CLICK_SOUND: CLICK_SOUND.play()
+        else:
+            self.highlight = False
 
     def draw(self, surface):
-        color = (0, 255, 0) if self.completed else ((255, 255, 0) if self.hovered else (100, 100, 255))
+        color = (0, 255, 0) if self.completed else ((255, 255, 0) if self.highlight else (100, 100, 255))
         pygame.draw.polygon(surface, color, self.vertices, 3)
 
 class WordGoal:
@@ -48,15 +61,9 @@ class WordGoal:
             self.polygons.append(PolygonGoal(char, start_x + offset, y, scale))
             offset += scale * 1.5
 
-    def update(self, mouse_pos):
+    def update(self, last_pos, curr_pos, is_clicking):
         for poly in self.polygons:
-            poly.update(mouse_pos)
-
-    def check_click(self):
-        for poly in self.polygons:
-            if poly.hovered and not poly.completed:
-                poly.completed = True
-                if CLICK_SOUND: CLICK_SOUND.play()
+            poly.update(last_pos, curr_pos, is_clicking)
 
     def draw(self, surface):
         for poly in self.polygons:
@@ -64,21 +71,28 @@ class WordGoal:
 
 def main():
     word_goal = WordGoal("HOLA", 300, 300, 80)
+    last_pos = pygame.mouse.get_pos()
 
     while True:
         screen.fill((30, 30, 30))
         draw_grid(screen)
-        mouse_pos = pygame.mouse.get_pos()
+        
+        curr_pos = pygame.mouse.get_pos()
+        is_clicking = pygame.mouse.get_pressed()[0]
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                word_goal.check_click()
         
-        word_goal.update(mouse_pos)
+        word_goal.update(last_pos, curr_pos, is_clicking)
         word_goal.draw(screen)
+        
+        # Dibujar rastro del mouse
+        if is_clicking:
+            pygame.draw.line(screen, (255, 0, 0), last_pos, curr_pos, 2)
+            
+        last_pos = curr_pos
         
         pygame.display.flip()
         clock.tick(60)
