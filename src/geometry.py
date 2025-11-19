@@ -46,10 +46,10 @@ def segment_bounds(p1, p2):
     return (min(p1[0], p2[0]), min(p1[1], p2[1]), max(p1[0], p2[0]), max(p1[1], p2[1]))
 
 def segment_hits_convex(p1, p2, poly):
-    # Implementación simplificada: verificar si algún punto está dentro o si cruza bordes
+    # Implementacion simplificada: verificar si algun punto esta dentro o si cruza bordes
     if is_point_in_polygon(p1, poly) or is_point_in_polygon(p2, poly):
         return True
-    # Chequeo de intersección de segmentos
+    # Chequeo de interseccion de segmentos
     n = len(poly)
     for i in range(n):
         edge_p1 = poly[i]
