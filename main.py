@@ -92,7 +92,18 @@ class WordGoal:
             poly.draw(surface)
 
 def main():
-    word_goal = WordGoal("HOLA", 300, 300, 80)
+    words = ["HOLA", "MUNDO", "ADA", "ALGORITMO", "DOBKIN"]
+    current_word_index = 0
+    
+    def load_level(index):
+        word = words[index % len(words)]
+        # Centrar la palabra aproximadamente
+        # scale=80, spacing approx 1.5 * scale = 120 per char
+        total_width = len(word) * 120 
+        start_x = (WIDTH - total_width) // 2
+        return WordGoal(word, start_x, 300, 80)
+
+    word_goal = load_level(current_word_index)
     last_pos = pygame.mouse.get_pos()
 
     while True:
@@ -113,9 +124,23 @@ def main():
         # Dibujar rastro del mouse
         if is_clicking:
             pygame.draw.line(screen, (255, 0, 0), last_pos, curr_pos, 2)
-            
+        
+        # Verificar victoria
+        if word_goal.is_completed():
+            pygame.display.flip()
+            pygame.time.delay(500) # Pausa breve
+            current_word_index += 1
+            word_goal = load_level(current_word_index)
+            # Resetear last_pos para evitar pintar accidentalmente al inicio del nivel
+            last_pos = pygame.mouse.get_pos()
+            curr_pos = last_pos 
+
         last_pos = curr_pos
         
+        # UI Info
+        level_text = FONT.render(f"Nivel: {current_word_index + 1}/{len(words)}", True, (200, 200, 200))
+        screen.blit(level_text, (20, 20))
+
         pygame.display.flip()
         clock.tick(60)
 
