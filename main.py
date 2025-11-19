@@ -12,6 +12,12 @@ pygame.display.set_caption("ConvexGlyph - Prototipo")
 clock = pygame.time.Clock()
 FONT = pygame.font.SysFont('Arial', 30)
 
+# Placeholder para sonidos
+try:
+    CLICK_SOUND = pygame.mixer.Sound('assets/click.wav')
+except:
+    CLICK_SOUND = None
+
 def draw_grid(surface):
     for x in range(0, WIDTH, 50):
         pygame.draw.line(surface, (40, 40, 40), (x, 0), (x, HEIGHT))
