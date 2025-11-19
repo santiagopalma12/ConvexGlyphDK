@@ -1,48 +1,27 @@
-# Intersecci√≥n de Pol√≠gonos y Jerarqu√≠a Dobkin-Kirkpatrick
+# ConvexGlyphDK
 
-Este repositorio contiene dos componentes complementarios:
+Juego educativo de trazado de palabras utilizando polÌgonos convexos y algoritmos geomÈtricos avanzados.
 
-1. **Convex Intersection Trainer** (`main.py`): un prototipo interactivo en Pygame donde las letras est√°n formadas por pol√≠gonos convexos. Cada pol√≠gono construye una jerarqu√≠a de Dobkin-Kirkpatrick para validar los trazos del usuario en tiempo casi logar√≠tmico.
-2. **Jerarqu√≠a Dobkin-Kirkpatrick** (`src/dk_hierarchy.py`): una implementaci√≥n reutilizable de la estructura jer√°rquica para poliedros/mallas trianguladas descrita por Dobkin y Kirkpatrick (1985), con soporte para enlaces padre-hijo entre capas y consultas de segmento.
+## DescripciÛn
+Este proyecto demuestra la implementaciÛn de la **JerarquÌa de Dobkin-Kirkpatrick** para la detecciÛn eficiente de intersecciones ((\log n)$) en un entorno interactivo con Pygame.
 
-## Requisitos
+## CaracterÌsticas
+- **Renderizado de PolÌgonos**: GeneraciÛn procedural de mallas para letras.
+- **Algoritmo DK Hierarchy**: Estructura de datos espacial para consultas geomÈtricas r·pidas.
+- **InteracciÛn de Corte**: Detecta si el trazo del mouse intersecta los polÌgonos.
 
-Instala las dependencias base (solo `pygame` hasta ahora):
+## InstalaciÛn
+1. Instalar dependencias:
+   `ash
+   pip install -r requirements.txt
+   `
+2. Ejecutar el juego:
+   `ash
+   python main.py
+   `
 
-```powershell
-python -m pip install -r requirements.txt
-```
-
-## Ejecutar el juego en pantalla completa
-
-```powershell
-python main.py
-```
-
-## Construir la jerarqu√≠a DK de ejemplo
-
-El script `dk_demo.py` genera un octaedro y crea la jerarqu√≠a completa, mostrando cu√°ntos v√©rtices/caraspersisten en cada nivel.
-
-```powershell
-python dk_demo.py
-```
-
-La demo ahora tambi√©n ejecuta un par de consultas `intersects_segment` contra la jerarqu√≠a construida.
-
-## Uso del m√≥dulo `dk_hierarchy`
-
-```python
-from src.dk_hierarchy import DKHierarchy, Polyhedron
-
-poly = Polyhedron(vertices=[...], faces=[...])  # malla triangulada convexa
-hierarchy = DKHierarchy.build(poly)
-print(f"Altura logar√≠tmica: {hierarchy.height()} niveles")
-print(hierarchy.intersects_segment((0.0, -2.0), (0.0, 2.0)))
-```
-
-Cada `HierarchyLevel` expone:
-
-- `mesh`: la malla simplificada `P_i`.
-- `parents`: lista de `ParentPointer` que indica si cada cara proviene directamente de una cara del nivel anterior o si fue creada al eliminar un v√©rtice.
-
-Esto facilita a√±adir algoritmos de localizaci√≥n de puntos o recorridos top-down usando los punteros de padres.
+## Estructura del Proyecto
+- src/dk_hierarchy.py: ImplementaciÛn del algoritmo Dobkin-Kirkpatrick.
+- src/geometry.py: Primitivas geomÈtricas y funciones auxiliares.
+- src/letter_mesh.py: Generador de formas de letras.
+- main.py: Bucle principal del juego.
