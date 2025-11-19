@@ -11,6 +11,12 @@ pygame.display.set_caption("ConvexGlyph - Prototipo")
 clock = pygame.time.Clock()
 FONT = pygame.font.SysFont('Arial', 30)
 
+def draw_grid(surface):
+    for x in range(0, WIDTH, 50):
+        pygame.draw.line(surface, (40, 40, 40), (x, 0), (x, HEIGHT))
+    for y in range(0, HEIGHT, 50):
+        pygame.draw.line(surface, (40, 40, 40), (0, y), (WIDTH, y))
+
 class PolygonGoal:
     def __init__(self, char, x, y, scale=50):
         self.char = char
@@ -53,6 +59,7 @@ def main():
 
     while True:
         screen.fill((30, 30, 30))
+        draw_grid(screen)
         mouse_pos = pygame.mouse.get_pos()
         
         for event in pygame.event.get():
