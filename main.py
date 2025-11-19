@@ -84,6 +84,9 @@ class WordGoal:
         for poly in self.polygons:
             poly.update(last_pos, curr_pos, is_clicking)
 
+    def is_completed(self):
+        return all(poly.is_completed() for poly in self.polygons)
+
     def draw(self, surface):
         for poly in self.polygons:
             poly.draw(surface)
