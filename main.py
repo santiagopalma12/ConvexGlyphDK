@@ -1,5 +1,6 @@
 import pygame
 import sys
+import math
 from src.letter_mesh import generate_polygon_mesh
 from src.dk_hierarchy import polyhedron_from_convex_polygon, DKHierarchy
 
@@ -8,9 +9,13 @@ pygame.init()
 pygame.mixer.init()
 WIDTH, HEIGHT = 1280, 720
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("ConvexGlyph - DK Intersection")
+pygame.display.set_caption("ConvexGlyph - DK Intersection (Brush Mode)")
 clock = pygame.time.Clock()
 FONT = pygame.font.SysFont('Arial', 30)
+
+# Configuración del Pincel (Brush)
+BRUSH_RADIUS = 10
+BRUSH_SAMPLES = 100  # Número de puntos para aproximar el círculo (Stress Test extremo)
 
 # Placeholder para sonidos
 try:
@@ -33,10 +38,33 @@ class PixelGoal:
         poly = polyhedron_from_convex_polygon(self.vertices)
         self.hierarchy = DKHierarchy.build(poly)
     
-    def update(self, last_pos, curr_pos, is_clicking):
+    def update(self, brush_center, is_clicking):
         if self.completed: return False
-        # Detectar interseccion usando DK Hierarchy (O(log n))
-        if self.hierarchy.intersects_segment(last_pos, curr_pos):
+        
+        # BRUSH MODE LOGIC:
+        # En lugar de un solo segmento, verificamos 100 puntos alrededor del cursor.
+        # Esto multiplica la carga por 100, demostrando la eficiencia de DK.
+        
+        cx, cy = brush_center
+        hit_found = False
+        
+        # 1. Verificar el centro
+        if self.hierarchy.intersects_segment((cx, cy), (cx, cy)):
+             hit_found = True
+        
+        # 2. Verificar puntos del perímetro si no hemos encontrado hit
+        if not hit_found:
+            for i in range(BRUSH_SAMPLES):
+                angle = (2 * math.pi * i) / BRUSH_SAMPLES
+                px = cx + math.cos(angle) * BRUSH_RADIUS
+                py = cy + math.sin(angle) * BRUSH_RADIUS
+                
+                # Usamos intersects_segment con start=end para simular point-in-polygon
+                if self.hierarchy.intersects_segment((px, py), (px, py)):
+                    hit_found = True
+                    break
+        
+        if hit_found:
             self.highlight = True
             if is_clicking:
                 self.completed = True
@@ -46,6 +74,7 @@ class PixelGoal:
         return False
     
     def get_debug_trace(self, last_pos, curr_pos):
+        # Para debug, seguimos usando el trazo simple del centro
         return self.hierarchy.trace_intersection(last_pos, curr_pos)
 
 class LetterGoal:
@@ -58,10 +87,10 @@ class LetterGoal:
             vertices = [(px + x, py + y) for px, py in raw_poly]
             self.pixels.append(PixelGoal(vertices))
         
-    def update(self, last_pos, curr_pos, is_clicking):
+    def update(self, brush_center, is_clicking):
         hit_any = False
         for pixel in self.pixels:
-            if pixel.update(last_pos, curr_pos, is_clicking):
+            if pixel.update(brush_center, is_clicking):
                 hit_any = True
         if hit_any and CLICK_SOUND:
             CLICK_SOUND.play()
@@ -83,9 +112,9 @@ class WordGoal:
             self.polygons.append(LetterGoal(char, start_x + offset, y, scale))
             offset += scale * 1.5
 
-    def update(self, last_pos, curr_pos, is_clicking):
+    def update(self, brush_center, is_clicking):
         for poly in self.polygons:
-            poly.update(last_pos, curr_pos, is_clicking)
+            poly.update(brush_center, is_clicking)
 
     def is_completed(self):
         return all(poly.is_completed() for poly in self.polygons)
@@ -204,7 +233,6 @@ def main():
         return WordGoal(word, start_x, 300, 80)
 
     word_goal = load_level(current_word_index)
-    last_pos = pygame.mouse.get_pos()
     debug_mode = False
 
     while True:
@@ -222,22 +250,31 @@ def main():
                 if event.key == pygame.K_d:
                     debug_mode = not debug_mode
         
-        word_goal.update(last_pos, curr_pos, is_clicking)
+        # UPDATE with BRUSH
+        word_goal.update(curr_pos, is_clicking)
         word_goal.draw(screen)
         
-        # Dibujar rastro del mouse
+        # DIBUJAR BRUSH CURSOR
+        pygame.draw.circle(screen, (255, 255, 255), curr_pos, BRUSH_RADIUS, 2)
         if is_clicking:
-            pygame.draw.line(screen, (255, 0, 0), last_pos, curr_pos, 2)
+            # Relleno suave al hacer click
+            s = pygame.Surface((BRUSH_RADIUS*2, BRUSH_RADIUS*2), pygame.SRCALPHA)
+            pygame.draw.circle(s, (255, 255, 255, 50), (BRUSH_RADIUS, BRUSH_RADIUS), BRUSH_RADIUS)
+            screen.blit(s, (curr_pos[0]-BRUSH_RADIUS, curr_pos[1]-BRUSH_RADIUS))
         
+        # Mostrar puntos de muestreo del brush (opcional, para ver la "magia")
+        if debug_mode:
+            for i in range(BRUSH_SAMPLES):
+                angle = (2 * math.pi * i) / BRUSH_SAMPLES
+                px = curr_pos[0] + math.cos(angle) * BRUSH_RADIUS
+                py = curr_pos[1] + math.sin(angle) * BRUSH_RADIUS
+                pygame.draw.circle(screen, (0, 255, 255), (int(px), int(py)), 2)
+
         if debug_mode:
             closest = get_closest_pixel(word_goal, curr_pos)
             if closest:
-                # Trace segment from last_pos to curr_pos
-                p1, p2 = last_pos, curr_pos
-                if p1 == p2:
-                    p2 = (p1[0] + 1, p1[1] + 1)
-                
-                trace = closest.get_debug_trace(p1, p2)
+                # Trace segment from center to center (just for visualization)
+                trace = closest.get_debug_trace(curr_pos, curr_pos)
                 draw_debug_trace(screen, trace)
                 
                 # Highlight closest pixel
@@ -249,15 +286,13 @@ def main():
             pygame.time.delay(500) # Pausa breve
             current_word_index += 1
             word_goal = load_level(current_word_index)
-            # Resetear last_pos para evitar pintar accidentalmente al inicio del nivel
-            last_pos = pygame.mouse.get_pos()
-            curr_pos = last_pos 
 
-        last_pos = curr_pos
-        
         # UI Info
         level_text = FONT.render(f"Nivel: {current_word_index + 1}/{len(words)}", True, (200, 200, 200))
         screen.blit(level_text, (20, 20))
+        
+        mode_text = FONT.render(f"Modo Brocha: {BRUSH_SAMPLES} puntos/frame", True, (100, 255, 100))
+        screen.blit(mode_text, (20, 60))
         
         debug_hint = pygame.font.SysFont('Arial', 16).render("Presiona 'D' para ver Debug DK", True, (100, 100, 100))
         screen.blit(debug_hint, (20, HEIGHT - 30))
