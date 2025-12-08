@@ -12,11 +12,11 @@ Este proyecto demuestra la implementacion de la **Jerarquia de Dobkin-Kirkpatric
 
 ## Instalacion
 1. Instalar dependencias:
-   `ash
+   `bash
    pip install -r requirements.txt
    `
 2. Ejecutar el juego:
-   `ash
+   `bash
    python main.py
    `
 
