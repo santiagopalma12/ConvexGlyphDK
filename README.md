@@ -1,16 +1,16 @@
 # ConvexGlyphDK
 
-Juego educativo de trazado de palabras utilizando polígonos convexos y algoritmos geométricos avanzados.
+Juego educativo de trazado de palabras utilizando poligonos convexos y algoritmos geometricos avanzados.
 
-## Descripción
-Este proyecto demuestra la implementación de la **Jerarquía de Dobkin-Kirkpatrick** para la detección eficiente de intersecciones ((\log n)$) en un entorno interactivo con Pygame.
+## Descripciï¿½n
+Este proyecto demuestra la implementaciï¿½n de la **Jerarquï¿½a de Dobkin-Kirkpatrick** para la detecciï¿½n eficiente de intersecciones ((\log n)$) en un entorno interactivo con Pygame.
 
-## Características
-- **Renderizado de Polígonos**: Generación procedural de mallas para letras.
-- **Algoritmo DK Hierarchy**: Estructura de datos espacial para consultas geométricas rápidas.
-- **Interacción de Corte**: Detecta si el trazo del mouse intersecta los polígonos.
+## Caracterï¿½sticas
+- **Renderizado de Polï¿½gonos**: Generaciï¿½n procedural de mallas para letras.
+- **Algoritmo DK Hierarchy**: Estructura de datos espacial para consultas geomï¿½tricas rï¿½pidas.
+- **Interacciï¿½n de Corte**: Detecta si el trazo del mouse intersecta los polï¿½gonos.
 
-## Instalación
+## Instalaciï¿½n
 1. Instalar dependencias:
    `ash
    pip install -r requirements.txt
@@ -21,7 +21,7 @@ Este proyecto demuestra la implementación de la **Jerarquía de Dobkin-Kirkpatric
    `
 
 ## Estructura del Proyecto
-- src/dk_hierarchy.py: Implementación del algoritmo Dobkin-Kirkpatrick.
-- src/geometry.py: Primitivas geométricas y funciones auxiliares.
+- src/dk_hierarchy.py: Implementaciï¿½n del algoritmo Dobkin-Kirkpatrick.
+- src/geometry.py: Primitivas geomï¿½tricas y funciones auxiliares.
 - src/letter_mesh.py: Generador de formas de letras.
 - main.py: Bucle principal del juego.

@@ -49,7 +49,7 @@ class GameMenu:
         self.selected_mode = None 
         self.selected_time = None 
 
-        # --- BOTONES DEL PRE-MENÚ (Título) ---
+        # BOTONES DEL PRE-MENÚ 
         cx, cy = width // 2, height // 2
         self.btn_play = MenuButton(cx - 150, cy, 300, 80, "JUGAR", (0, 180, 0), (50, 230, 50), 'PLAY')
         self.btn_quit = MenuButton(cx - 150, cy + 100, 300, 80, "SALIR", (180, 0, 0), (230, 50, 50), 'QUIT')
@@ -214,7 +214,7 @@ class GameMenu:
         
         # Título General (Solo en Main)
         if self.state == 'MAIN_TITLE':
-            title_surf = self.title_font.render("ConvexGlyph", True, (255, 255, 255))
+            title_surf = self.title_font.render("CalliRehab", True, (255, 255, 255))
             title_rect = title_surf.get_rect(center=(self.width//2, self.height//2 - 100))
             screen.blit(title_surf, title_rect)
             
@@ -224,7 +224,7 @@ class GameMenu:
         else:
             # Título pequeño
             header_font = pygame.font.SysFont('Arial', 40, bold=True)
-            title_surf = header_font.render("ConvexGlyph", True, (150, 150, 150))
+            title_surf = header_font.render("CalliRehab", True, (150, 150, 150))
             screen.blit(title_surf, (self.width//2 - title_surf.get_width()//2, 30))
             
             # --- DIBUJAR CONTENIDO POR ESTADO ---
